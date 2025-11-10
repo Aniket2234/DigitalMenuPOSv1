@@ -37,17 +37,19 @@ export default async function handler(req, res) {
       console.log(`Found ${cartItems.length} cart items`);
       res.status(200).json(cartItems);
     } else if (req.method === 'POST') {
-      const newCartItem = {
-        ...req.body,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      const result = await database.collection('cart').insertOne(newCartItem);
-      const insertedItem = await database.collection('cart').findOne({ _id: result.insertedId });
-      res.status(201).json(insertedItem);
+      // DISABLED: Write operation blocked to prevent database modifications
+      console.warn('POST to cart is disabled - database is in READ-ONLY mode');
+      res.status(403).json({ 
+        error: 'Database is in READ-ONLY mode',
+        message: 'Write operations are disabled'
+      });
     } else if (req.method === 'DELETE') {
-      await database.collection('cart').deleteMany({});
-      res.status(204).send();
+      // DISABLED: Delete operation blocked to prevent database modifications
+      console.warn('DELETE on cart is disabled - database is in READ-ONLY mode');
+      res.status(403).json({ 
+        error: 'Database is in READ-ONLY mode',
+        message: 'Delete operations are disabled'
+      });
     } else {
       res.status(405).json({ error: 'Method not allowed' });
     }

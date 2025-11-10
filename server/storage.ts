@@ -425,26 +425,14 @@ export class MongoStorage implements IStorage {
 
   async connect() {
     await this.client.connect();
-    await this.ensureCollectionsExist();
+    // DISABLED: Auto-creation of collections to prevent database modifications
+    // await this.ensureCollectionsExist();
   }
 
   private async ensureCollectionsExist() {
-    try {
-      // Get list of existing collections
-      const existingCollections = await this.db.listCollections().toArray();
-      const existingNames = existingCollections.map(c => c.name);
-
-      // Create collections for categories that don't exist
-      for (const [category, collection] of this.categoryCollections) {
-        const collectionName = collection.collectionName;
-        if (!existingNames.includes(collectionName)) {
-          await this.db.createCollection(collectionName);
-          console.log(`Created collection: ${collectionName} for category: ${category}`);
-        }
-      }
-    } catch (error) {
-      console.error("Error ensuring collections exist:", error);
-    }
+    // DISABLED: This method is no longer called to prevent auto-creation of collections
+    // The database should already have all necessary collections
+    console.log("Auto-collection creation is disabled - using existing collections only");
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -468,23 +456,9 @@ export class MongoStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    try {
-      const now = new Date();
-      const user: Omit<User, '_id'> = {
-        ...insertUser,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      const result = await this.usersCollection.insertOne(user as User);
-      return {
-        _id: result.insertedId,
-        ...user,
-      } as User;
-    } catch (error) {
-      console.error("Error creating user:", error);
-      throw error;
-    }
+    // DISABLED: Write operation blocked to prevent database modifications
+    console.warn("createUser() is disabled - database is in READ-ONLY mode");
+    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
   }
 
   async getMenuItems(): Promise<MenuItem[]> {
@@ -543,30 +517,9 @@ export class MongoStorage implements IStorage {
   }
 
   async addMenuItem(item: InsertMenuItem): Promise<MenuItem> {
-    try {
-      const collection = this.categoryCollections.get(item.category);
-      if (!collection) {
-        throw new Error(`Category "${item.category}" not found`);
-      }
-
-      const now = new Date();
-      const menuItem: Omit<MenuItem, '_id'> = {
-        ...item,
-        restaurantId: this.restaurantId,
-        createdAt: now,
-        updatedAt: now,
-        __v: 0
-      };
-
-      const result = await collection.insertOne(menuItem as MenuItem);
-      return {
-        _id: result.insertedId,
-        ...menuItem,
-      } as MenuItem;
-    } catch (error) {
-      console.error("Error adding menu item:", error);
-      throw error;
-    }
+    // DISABLED: Write operation blocked to prevent database modifications
+    console.warn("addMenuItem() is disabled - database is in READ-ONLY mode");
+    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
   }
 
   async getCartItems(): Promise<CartItem[]> {
@@ -580,57 +533,21 @@ export class MongoStorage implements IStorage {
   }
 
   async addToCart(item: InsertCartItem): Promise<CartItem> {
-    try {
-      const menuItemObjectId = new ObjectId(item.menuItemId);
-      const existing = await this.cartItemsCollection.findOne({ menuItemId: menuItemObjectId });
-
-      if (existing) {
-        const updatedCart = await this.cartItemsCollection.findOneAndUpdate(
-          { _id: existing._id },
-          {
-            $inc: { quantity: item.quantity || 1 },
-            $set: { updatedAt: new Date() }
-          },
-          { returnDocument: 'after' }
-        );
-        return updatedCart!;
-      }
-
-      const now = new Date();
-      const cartItem: Omit<CartItem, '_id'> = {
-        menuItemId: menuItemObjectId,
-        quantity: item.quantity || 1,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      const result = await this.cartItemsCollection.insertOne(cartItem as CartItem);
-      return {
-        _id: result.insertedId,
-        ...cartItem,
-      } as CartItem;
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      throw error;
-    }
+    // DISABLED: Write operation blocked to prevent database modifications
+    console.warn("addToCart() is disabled - database is in READ-ONLY mode");
+    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
   }
 
   async removeFromCart(id: string): Promise<void> {
-    try {
-      await this.cartItemsCollection.deleteOne({ _id: new ObjectId(id) });
-    } catch (error) {
-      console.error("Error removing from cart:", error);
-      throw error;
-    }
+    // DISABLED: Delete operation blocked to prevent database modifications
+    console.warn("removeFromCart() is disabled - database is in READ-ONLY mode");
+    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
   }
 
   async clearCart(): Promise<void> {
-    try {
-      await this.cartItemsCollection.deleteMany({});
-    } catch (error) {
-      console.error("Error clearing cart:", error);
-      throw error;
-    }
+    // DISABLED: Delete operation blocked to prevent database modifications
+    console.warn("clearCart() is disabled - database is in READ-ONLY mode");
+    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
   }
 
   private sortMenuItems(items: MenuItem[]): MenuItem[] {
@@ -664,5 +581,10 @@ export class MongoStorage implements IStorage {
   }
 }
 
-const connectionString = "mongodb+srv://airavatatechnologiesprojects:8tJ6v8oTyQE1AwLV@mingsdb.mmjpnwc.mongodb.net/?retryWrites=true&w=majority&appName=MINGSDB";
+// REMOVED: Hardcoded connection string removed for security
+// Connection string will now come from environment variables via MONGODB_URI
+const connectionString = process.env.MONGODB_URI || process.env.DATABASE_URL || "";
+if (!connectionString) {
+  throw new Error("MONGODB_URI environment variable is not set. Please configure your MongoDB connection string.");
+}
 export const storage = new MongoStorage(connectionString);
