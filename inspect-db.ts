@@ -8,11 +8,11 @@ async function inspectDatabase() {
     await client.connect();
     console.log("✅ Connected to MongoDB successfully\n");
     
-    const db = client.db("mingsdb");
+    const db = client.db("restaurant_pos");
     
     // List all collections
     const collections = await db.listCollections().toArray();
-    console.log("=== COLLECTIONS FOUND ===");
+    console.log("=== COLLECTIONS IN 'restaurant_pos' DATABASE ===");
     console.log(`Total collections: ${collections.length}\n`);
     
     for (const collection of collections) {
@@ -28,7 +28,12 @@ async function inspectDatabase() {
       console.log(`\n=== ${collName} ===`);
       console.log(`Documents count: ${count}`);
       
-      if (count > 0) {
+      if (count > 0 && count <= 3) {
+        // Get all documents if count is small
+        const docs = await coll.find({}).limit(3).toArray();
+        console.log("Sample documents:");
+        console.log(JSON.stringify(docs, null, 2));
+      } else if (count > 0) {
         // Get sample document to understand schema
         const sample = await coll.findOne({});
         console.log("Sample document structure:");

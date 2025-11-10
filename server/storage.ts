@@ -386,7 +386,7 @@ export class MongoStorage implements IStorage {
 
   constructor(connectionString: string) {
     this.client = new MongoClient(connectionString);
-    this.db = this.client.db("mingsdb");
+    this.db = this.client.db("restaurant_pos");
     this.categoryCollections = new Map();
 
     // Initialize collections for each category with correct collection names
@@ -463,16 +463,12 @@ export class MongoStorage implements IStorage {
 
   async getMenuItems(): Promise<MenuItem[]> {
     try {
-      const allMenuItems: MenuItem[] = [];
-
-      // Get items from all category collections
-      for (const [category, collection] of this.categoryCollections) {
-        const items = await collection.find({}).toArray();
-        allMenuItems.push(...items);
-      }
+      // Fetch all menu items from single menuItems collection
+      const menuItemsCollection = this.db.collection("menuItems");
+      const allMenuItems = await menuItemsCollection.find({}).toArray();
 
       // Apply custom sorting: Veg items first, then Chicken, then Prawns, then others
-      return this.sortMenuItems(allMenuItems);
+      return this.sortMenuItems(allMenuItems as any);
     } catch (error) {
       console.error("Error getting menu items:", error);
       return [];
@@ -481,15 +477,12 @@ export class MongoStorage implements IStorage {
 
   async getMenuItemsByCategory(category: string): Promise<MenuItem[]> {
     try {
-      const collection = this.categoryCollections.get(category);
-      if (!collection) {
-        console.error(`Category "${category}" not found`);
-        return [];
-      }
-
-      const menuItems = await collection.find({}).toArray();
+      // Fetch menu items filtered by category from single menuItems collection
+      const menuItemsCollection = this.db.collection("menuItems");
+      const menuItems = await menuItemsCollection.find({ category }).toArray();
+      
       // Apply custom sorting: Veg items first, then Chicken, then Prawns, then others
-      return this.sortMenuItems(menuItems);
+      return this.sortMenuItems(menuItems as any);
     } catch (error) {
       console.error("Error getting menu items by category:", error);
       return [];
@@ -498,14 +491,10 @@ export class MongoStorage implements IStorage {
 
   async getMenuItem(id: string): Promise<MenuItem | undefined> {
     try {
-      // Search across all category collections
-      for (const [category, collection] of this.categoryCollections) {
-        const menuItem = await collection.findOne({ _id: new ObjectId(id) });
-        if (menuItem) {
-          return menuItem;
-        }
-      }
-      return undefined;
+      // Search in menuItems collection by id field (not _id)
+      const menuItemsCollection = this.db.collection("menuItems");
+      const menuItem = await menuItemsCollection.findOne({ id });
+      return menuItem as any || undefined;
     } catch (error) {
       console.error("Error getting menu item:", error);
       return undefined;

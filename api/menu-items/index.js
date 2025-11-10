@@ -172,7 +172,7 @@ async function connectToDatabase() {
     client = new MongoClient(connectionString);
     await client.connect();
   }
-  return client.db("mingsdb");
+  return client.db("restaurant_pos");
 }
 
 function sortMenuItems(items) {
@@ -225,83 +225,20 @@ export default async function handler(req, res) {
       const { category } = req.query;
 
       if (category) {
-        // Get items from specific category collection
+        // Get items from menuItems collection filtered by category
         console.log(`Fetching items for category: ${category}`);
 
-        // Map category names to collection names
-        const categoryMap = {
-          "new": "new",
-          "soups": "soups",
-          "vegstarter": "vegstarter",
-          "chickenstarter": "chickenstarter",
-          "prawnsstarter": "prawnsstarter",
-          "seafood": "seafood",
-          "springrolls": "springrolls",
-          "momos": "momos",
-          "gravies": "gravies",
-          "potrice": "potrice",
-          "rice": "rice",
-          "ricewithgravy": "ricewithgravy",
-          "noodle": "noodle",
-          "noodlewithgravy": "noodlewithgravy",
-          "thai": "thai",
-          "chopsuey": "chopsuey",
-          "desserts": "desserts",
-          "beverages": "beverages",
-          "extra": "extra"
-        };
-
-
-
-        const collectionName = categoryMap[category];
-        if (!collectionName) {
-          res.status(400).json({ error: 'Invalid category' });
-          return;
-        }
-
-        const items = await database.collection(collectionName).find({}).toArray();
+        const items = await database.collection('menuItems').find({ category }).toArray();
         console.log(`Found ${items.length} items in ${category} category`);
         const sortedItems = sortMenuItems(items);
         res.status(200).json(sortedItems);
       } else {
-        // Get all menu items from all category collections
+        // Get all menu items from menuItems collection
         console.log('Fetching all menu items...');
 
-        const categories = [
-          "new",
-          "soups",
-          "vegstarter",
-          "chickenstarter",
-          "prawnsstarter",
-          "seafood",
-          "springrolls",
-          "momos",
-          "gravies",
-          "potrice",
-          "rice",
-          "ricewithgravy",
-          "noodle",
-          "noodlewithgravy",
-          "thai",
-          "chopsuey",
-          "desserts",
-          "beverages",
-          "extra"
-        ];
+        const allMenuItems = await database.collection('menuItems').find({}).toArray();
 
-
-        let allMenuItems = [];
-
-        for (const categoryCollection of categories) {
-          try {
-            const items = await database.collection(categoryCollection).find({}).toArray();
-            allMenuItems = allMenuItems.concat(items);
-          } catch (error) {
-            console.log(`Collection ${categoryCollection} not found or empty`);
-          }
-        }
-
-        console.log(`Found ${allMenuItems.length} menu items across all categories`);
+        console.log(`Found ${allMenuItems.length} menu items`);
         const sortedAllItems = sortMenuItems(allMenuItems);
         res.status(200).json(sortedAllItems);
       }
