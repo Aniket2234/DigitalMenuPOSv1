@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Plus, Minus, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { MenuItem } from "@shared/schema";
@@ -7,10 +7,20 @@ import type { MenuItem } from "@shared/schema";
 interface DishCardProps {
   item: MenuItem;
   onAddToCart: (item: MenuItem) => void;
+  onIncrement?: (item: MenuItem) => void;
+  onDecrement?: (item: MenuItem) => void;
+  onNotesClick?: (item: MenuItem) => void;
   quantity?: number;
 }
 
-export default function DishCard({ item, onAddToCart, quantity = 0 }: DishCardProps) {
+export default function DishCard({ 
+  item, 
+  onAddToCart, 
+  onIncrement,
+  onDecrement,
+  onNotesClick,
+  quantity = 0 
+}: DishCardProps) {
   return (
     <motion.div
       whileHover={{ y: -2, scale: 1.01 }}
@@ -57,25 +67,56 @@ export default function DishCard({ item, onAddToCart, quantity = 0 }: DishCardPr
               >
                 ₹{item.price}
               </span>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Button
-                  size="sm"
-                  onClick={() => onAddToCart(item)}
-                  className="relative"
-                  data-testid={`button-add-to-cart-${item._id}`}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
-                {quantity > 0 && (
-                  <Badge
-                    variant="default"
-                    className="px-2 py-1"
-                    style={{ backgroundColor: 'var(--mings-orange)' }}
-                    data-testid={`badge-quantity-${item._id}`}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {quantity > 0 ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onDecrement?.(item)}
+                      className="h-8 w-8 p-0"
+                      data-testid={`button-decrease-${item._id}`}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Badge
+                      variant="default"
+                      className="px-3 py-1 h-8 flex items-center"
+                      style={{ backgroundColor: 'var(--mings-orange)' }}
+                      data-testid={`badge-quantity-${item._id}`}
+                    >
+                      {quantity}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onIncrement?.(item)}
+                      className="h-8 w-8 p-0"
+                      data-testid={`button-increase-${item._id}`}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    {onNotesClick && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onNotesClick(item)}
+                        className="h-8 w-8 p-0 ml-1"
+                        data-testid={`button-notes-${item._id}`}
+                      >
+                        <StickyNote className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => onAddToCart(item)}
+                    data-testid={`button-add-to-cart-${item._id}`}
                   >
-                    {quantity}
-                  </Badge>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
                 )}
               </div>
             </div>

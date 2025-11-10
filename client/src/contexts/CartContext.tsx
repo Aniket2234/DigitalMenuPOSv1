@@ -52,8 +52,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           ...item,
           id: `${item.menuItemId}-${Date.now()}`,
           quantity: 1,
-          notes: '',
-          spiceLevel: 'regular'
+          notes: item.notes || '',
+          spiceLevel: item.spiceLevel || 'regular'
         }];
       }
 

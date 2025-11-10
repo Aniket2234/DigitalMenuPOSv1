@@ -1,7 +1,6 @@
-import { ShoppingCart, Trash2, Plus, Minus, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
 import {
@@ -12,18 +11,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -32,13 +19,10 @@ export function Cart() {
     cart,
     removeFromCart,
     updateQuantity,
-    updateNotes,
-    updateSpiceLevel,
     clearCart,
   } = useCart();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
 
   const handleSaveCart = () => {
     toast({
@@ -172,59 +156,17 @@ export function Cart() {
                     </div>
                   </div>
 
-                  {/* Spice Level Selection */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Spice Level</label>
-                    <Select
-                      value={item.spiceLevel || 'regular'}
-                      onValueChange={(value) =>
-                        updateSpiceLevel(item.id, value as any)
-                      }
-                    >
-                      <SelectTrigger data-testid={`select-spice-${item.menuItemId}`}>
-                        <SelectValue placeholder="Select spice level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="no-spicy">No Spicy</SelectItem>
-                        <SelectItem value="less-spicy">Less Spicy</SelectItem>
-                        <SelectItem value="regular">Regular</SelectItem>
-                        <SelectItem value="more-spicy">More Spicy</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Custom Notes */}
-                  <Collapsible
-                    open={expandedNotes[item.id] || false}
-                    onOpenChange={(open) => {
-                      setExpandedNotes(prev => ({ ...prev, [item.id]: open }));
-                    }}
-                  >
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full flex items-center justify-between"
-                        data-testid={`button-toggle-notes-${item.menuItemId}`}
-                      >
-                        <span className="text-sm font-medium">Special Instructions</span>
-                        {expandedNotes[item.id] ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-2">
-                      <Textarea
-                        placeholder="Add notes (e.g., no onions, extra sauce...)"
-                        value={item.notes || ''}
-                        onChange={(e) => updateNotes(item.id, e.target.value)}
-                        className="resize-none h-20"
-                        data-testid={`textarea-notes-${item.menuItemId}`}
-                      />
-                    </CollapsibleContent>
-                  </Collapsible>
+                  {/* Display Spice Level and Notes (Read-only) */}
+                  {(item.spiceLevel && item.spiceLevel !== 'regular') && (
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-medium">Spice:</span> {item.spiceLevel.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </div>
+                  )}
+                  {item.notes && (
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-medium">Notes:</span> {item.notes}
+                    </div>
+                  )}
                 </div>
               ))}
 

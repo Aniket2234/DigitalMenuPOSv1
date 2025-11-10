@@ -18,11 +18,27 @@ import { FaInstagram } from "react-icons/fa";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import DishCard from "@/components/dish-card";
 import { Cart } from "@/components/Cart";
 import { useCart } from "@/hooks/useCart";
 import type { MenuItem } from "@shared/schema";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Type declarations for Speech Recognition API
 declare global {
@@ -146,7 +162,11 @@ export default function Menu() {
   const [isListening, setIsListening] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState(null);
   const [voiceSearchSupported, setVoiceSearchSupported] = useState(false);
-  const { addToCart, cart } = useCart();
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+  const [selectedItemForNotes, setSelectedItemForNotes] = useState<MenuItem | null>(null);
+  const [itemPreferences, setItemPreferences] = useState<Record<string, { spiceLevel: string; notes: string }>>({});
+  
+  const { addToCart, cart, updateQuantity, removeFromCart, updateNotes, updateSpiceLevel } = useCart();
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu-items"],
@@ -157,6 +177,50 @@ export default function Menu() {
     return cart.items
       .filter(item => item.menuItemId === menuItemId)
       .reduce((total, item) => total + item.quantity, 0);
+  };
+
+  // Handler for incrementing item quantity
+  const handleIncrement = (menuItem: MenuItem) => {
+    const cartItem = cart.items.find(item => item.menuItemId === menuItem._id.toString());
+    if (cartItem) {
+      updateQuantity(cartItem.id, cartItem.quantity + 1);
+    }
+  };
+
+  // Handler for decrementing item quantity
+  const handleDecrement = (menuItem: MenuItem) => {
+    const cartItem = cart.items.find(item => item.menuItemId === menuItem._id.toString());
+    if (cartItem) {
+      if (cartItem.quantity > 1) {
+        updateQuantity(cartItem.id, cartItem.quantity - 1);
+      } else {
+        removeFromCart(cartItem.id);
+      }
+    }
+  };
+
+  // Handler for opening notes dialog
+  const handleNotesClick = (menuItem: MenuItem) => {
+    setSelectedItemForNotes(menuItem);
+    setNotesDialogOpen(true);
+  };
+
+  // Handler for saving notes and spice level
+  const handleSavePreferences = () => {
+    if (selectedItemForNotes) {
+      const menuItemId = selectedItemForNotes._id.toString();
+      const prefs = itemPreferences[menuItemId] || { spiceLevel: 'regular', notes: '' };
+      
+      // Update all cart items with this menuItemId
+      cart.items.forEach(item => {
+        if (item.menuItemId === menuItemId) {
+          updateSpiceLevel(item.id, prefs.spiceLevel as any);
+          updateNotes(item.id, prefs.notes);
+        }
+      });
+      
+      setNotesDialogOpen(false);
+    }
   };
 
   // Initialize Speech Recognition
@@ -909,14 +973,21 @@ export default function Menu() {
             item={item}
             quantity={getItemQuantity(item._id.toString())}
             onAddToCart={(menuItem) => {
+              const menuItemId = menuItem._id.toString();
+              const prefs = itemPreferences[menuItemId] || { spiceLevel: 'regular', notes: '' };
               addToCart({
-                menuItemId: menuItem._id.toString(),
+                menuItemId,
                 name: menuItem.name,
                 price: menuItem.price.toString(),
                 isVeg: menuItem.isVeg,
                 image: menuItem.image,
+                spiceLevel: prefs.spiceLevel as any,
+                notes: prefs.notes,
               });
             }}
+            onIncrement={handleIncrement}
+            onDecrement={handleDecrement}
+            onNotesClick={handleNotesClick}
           />
         </motion.div>
       ))}
@@ -931,6 +1002,77 @@ export default function Menu() {
           onClick={() => setShowFilterDropdown(false)}
         />
       )}
+
+      {/* Notes and Spice Level Dialog */}
+      <Dialog open={notesDialogOpen} onOpenChange={setNotesDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Customize Your Order</DialogTitle>
+            <DialogDescription>
+              {selectedItemForNotes?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* Spice Level */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Spice Level</label>
+              <Select
+                value={itemPreferences[selectedItemForNotes?._id.toString() || '']?.spiceLevel || 'regular'}
+                onValueChange={(value) => {
+                  if (selectedItemForNotes) {
+                    setItemPreferences(prev => ({
+                      ...prev,
+                      [selectedItemForNotes._id.toString()]: {
+                        ...prev[selectedItemForNotes._id.toString()],
+                        spiceLevel: value,
+                        notes: prev[selectedItemForNotes._id.toString()]?.notes || ''
+                      }
+                    }));
+                  }
+                }}
+              >
+                <SelectTrigger data-testid="select-spice-dialog">
+                  <SelectValue placeholder="Select spice level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no-spicy">No Spicy</SelectItem>
+                  <SelectItem value="less-spicy">Less Spicy</SelectItem>
+                  <SelectItem value="regular">Regular</SelectItem>
+                  <SelectItem value="more-spicy">More Spicy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Special Instructions */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Special Instructions</label>
+              <Textarea
+                placeholder="Add notes (e.g., no onions, extra sauce...)"
+                value={itemPreferences[selectedItemForNotes?._id.toString() || '']?.notes || ''}
+                onChange={(e) => {
+                  if (selectedItemForNotes) {
+                    setItemPreferences(prev => ({
+                      ...prev,
+                      [selectedItemForNotes._id.toString()]: {
+                        ...prev[selectedItemForNotes._id.toString()],
+                        notes: e.target.value,
+                        spiceLevel: prev[selectedItemForNotes._id.toString()]?.spiceLevel || 'regular'
+                      }
+                    }));
+                  }
+                }}
+                className="resize-none h-20"
+                data-testid="textarea-notes-dialog"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSavePreferences} data-testid="button-save-preferences">
+              Save Preferences
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
