@@ -1,7 +1,8 @@
-import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/hooks/useCart';
 import {
   Sheet,
@@ -11,6 +12,21 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -20,9 +36,15 @@ export function Cart() {
     removeFromCart,
     updateQuantity,
     clearCart,
+    updateNotes,
+    updateSpiceLevel,
   } = useCart();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+  const [selectedCartItem, setSelectedCartItem] = useState<any | null>(null);
+  const [tempNotes, setTempNotes] = useState('');
+  const [tempSpiceLevel, setTempSpiceLevel] = useState('regular');
 
   const handleSaveCart = () => {
     toast({
@@ -38,6 +60,26 @@ export function Cart() {
     });
     clearCart();
     setIsOpen(false);
+  };
+
+  const handleNotesClick = (item: any) => {
+    setSelectedCartItem(item);
+    setTempNotes(item.notes || '');
+    setTempSpiceLevel(item.spiceLevel || 'regular');
+    setNotesDialogOpen(true);
+  };
+
+  const handleSavePreferences = () => {
+    if (selectedCartItem) {
+      updateNotes(selectedCartItem.id, tempNotes);
+      updateSpiceLevel(selectedCartItem.id, tempSpiceLevel);
+      toast({
+        title: 'Preferences Updated',
+        description: 'Item preferences have been saved!',
+      });
+      setNotesDialogOpen(false);
+      setSelectedCartItem(null);
+    }
   };
 
   return (
@@ -99,9 +141,19 @@ export function Cart() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold truncate" data-testid={`text-item-name-${item.menuItemId}`}>
-                            {item.name}
-                          </h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold truncate" data-testid={`text-item-name-${item.menuItemId}`}>
+                              {item.name}
+                            </h4>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => handleNotesClick(item)}
+                              data-testid={`button-notes-cart-${item.menuItemId}`}
+                            >
+                              <StickyNote className="h-4 w-4" />
+                            </Button>
+                          </div>
                           <p className="text-sm text-muted-foreground" data-testid={`text-item-price-${item.menuItemId}`}>
                             ₹{item.price}
                           </p>
@@ -207,6 +259,59 @@ export function Cart() {
           )}
         </div>
       </SheetContent>
+
+      {/* Notes Dialog */}
+      <Dialog open={notesDialogOpen} onOpenChange={setNotesDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Item Preferences</DialogTitle>
+            <DialogDescription>
+              Customize your preferences for {selectedCartItem?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Spice Level</label>
+              <Select value={tempSpiceLevel} onValueChange={setTempSpiceLevel}>
+                <SelectTrigger data-testid="select-spice-level">
+                  <SelectValue placeholder="Select spice level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no-spicy">No Spicy</SelectItem>
+                  <SelectItem value="less-spicy">Less Spicy</SelectItem>
+                  <SelectItem value="regular">Regular</SelectItem>
+                  <SelectItem value="more-spicy">More Spicy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Additional Notes</label>
+              <Textarea
+                value={tempNotes}
+                onChange={(e) => setTempNotes(e.target.value)}
+                placeholder="Any special instructions? (e.g., no onions, extra sauce)"
+                rows={4}
+                data-testid="textarea-notes"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setNotesDialogOpen(false)}
+              data-testid="button-cancel-notes"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSavePreferences}
+              data-testid="button-save-notes"
+            >
+              Save Preferences
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 }

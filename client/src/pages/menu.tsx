@@ -18,6 +18,7 @@ import { FaInstagram } from "react-icons/fa";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import DishCard from "@/components/dish-card";
@@ -518,6 +519,34 @@ export default function Menu() {
           </motion.div>
         )}
       </header>
+
+      {/* Table Number and Floor Display */}
+      <div className="bg-gray-50 dark:bg-gray-900 border-b dark:border-gray-800">
+        <div className="container mx-auto px-3 sm:px-4 py-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Table:</span>
+              <Badge 
+                variant="secondary" 
+                className="text-sm font-semibold"
+                data-testid="badge-table-number"
+              >
+                T1
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Floor:</span>
+              <Badge 
+                variant="secondary" 
+                className="text-sm font-semibold"
+                data-testid="badge-floor"
+              >
+                First floor
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Search Bar with Filter and Voice Search */}
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
