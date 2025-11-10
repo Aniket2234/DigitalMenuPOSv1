@@ -11,6 +11,8 @@ interface CartContextType {
   updateNotes: (id: string, notes: string) => void;
   updateSpiceLevel: (id: string, spiceLevel: CartItemWithDetails['spiceLevel']) => void;
   clearCart: () => void;
+  markItemsAsOrdered: () => void;
+  hasUnorderedItems: () => boolean;
 }
 
 export const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -104,6 +106,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart({ items: [], total: 0, itemCount: 0 });
   };
 
+  const markItemsAsOrdered = () => {
+    setCart(prev => {
+      const newItems = prev.items.map(i => ({ ...i, isOrdered: true }));
+      return { ...prev, items: newItems };
+    });
+  };
+
+  const hasUnorderedItems = () => {
+    return cart.items.some(item => !item.isOrdered);
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -113,7 +126,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         updateNotes,
         updateSpiceLevel,
-        clearCart
+        clearCart,
+        markItemsAsOrdered,
+        hasUnorderedItems
       }}
     >
       {children}

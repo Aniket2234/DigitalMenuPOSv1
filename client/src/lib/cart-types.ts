@@ -8,6 +8,7 @@ export interface CartItemWithDetails {
   image?: string;
   notes?: string;
   spiceLevel?: 'regular' | 'less-spicy' | 'more-spicy' | 'no-spicy';
+  isOrdered?: boolean;
 }
 
 export interface Cart {

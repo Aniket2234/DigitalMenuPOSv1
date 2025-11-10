@@ -38,6 +38,8 @@ export function Cart() {
     clearCart,
     updateNotes,
     updateSpiceLevel,
+    markItemsAsOrdered,
+    hasUnorderedItems,
   } = useCart();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -54,12 +56,16 @@ export function Cart() {
   };
 
   const handleOrder = () => {
+    const hasExistingOrder = cart.items.some(item => item.isOrdered);
+    const unorderedCount = cart.items.filter(item => !item.isOrdered).length;
+    
     toast({
-      title: 'Order Placed',
-      description: `Your order for ${cart.itemCount} items (₹${cart.total.toFixed(2)}) has been received!`,
+      title: hasExistingOrder ? 'Order Updated' : 'Order Placed',
+      description: hasExistingOrder 
+        ? `${unorderedCount} new item${unorderedCount === 1 ? '' : 's'} added to your order!`
+        : `Your order for ${cart.itemCount} items (₹${cart.total.toFixed(2)}) has been received!`,
     });
-    clearCart();
-    setIsOpen(false);
+    markItemsAsOrdered();
   };
 
   const handleNotesClick = (item: any) => {
@@ -141,10 +147,15 @@ export function Cart() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-semibold truncate" data-testid={`text-item-name-${item.menuItemId}`}>
                               {item.name}
                             </h4>
+                            {item.isOrdered && (
+                              <Badge variant="secondary" className="text-xs" data-testid={`badge-ordered-${item.menuItemId}`}>
+                                Ordered
+                              </Badge>
+                            )}
                             <Button
                               size="icon"
                               variant="outline"
@@ -233,9 +244,10 @@ export function Cart() {
                   <Button
                     className="w-full"
                     onClick={handleOrder}
+                    disabled={!hasUnorderedItems()}
                     data-testid="button-order"
                   >
-                    Place Order
+                    {cart.items.some(item => item.isOrdered) ? 'Update Order' : 'Place Order'}
                   </Button>
                   <Button
                     variant="outline"
