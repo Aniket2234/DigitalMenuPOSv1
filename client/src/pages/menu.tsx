@@ -406,7 +406,7 @@ export default function Menu() {
                     fontFamily: "Open Sans, sans-serif",
                   }}
                 >
-                  Restaurant Information
+                  About
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
@@ -416,32 +416,13 @@ export default function Menu() {
                         className="font-semibold text-gray-800"
                         style={{ fontFamily: "Open Sans, sans-serif" }}
                       >
-                        Mings Chinese Cuisine
+                        Restaurant POS
                       </p>
                       <p
                         className="text-sm text-gray-600"
                         style={{ fontFamily: "Open Sans, sans-serif" }}
                       >
-                        Shop no 2&3, ganga godavari apartment, katemanivali
-                        naka, Prabhuram Nagar, Kalyan East, Thane, Kalyan,
-                        Maharashtra 421306
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Phone className="h-5 w-5 text-gray-600" />
-                    <div>
-                      <p
-                        className="font-semibold text-gray-800"
-                        style={{ fontFamily: "Open Sans, sans-serif" }}
-                      >
-                        07506969333
-                      </p>
-                      <p
-                        className="text-sm text-gray-600"
-                        style={{ fontFamily: "Open Sans, sans-serif" }}
-                      >
-                        For reservations & orders
+                        Digital menu system for modern restaurants
                       </p>
                     </div>
                   </div>
@@ -452,37 +433,13 @@ export default function Menu() {
                         className="font-semibold text-gray-800"
                         style={{ fontFamily: "Open Sans, sans-serif" }}
                       >
-                        11:00 AM - 11:00 PM
+                        Available 24/7
                       </p>
                       <p
                         className="text-sm text-gray-600"
                         style={{ fontFamily: "Open Sans, sans-serif" }}
                       >
-                        Open all days
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <FaInstagram className="h-5 w-5 text-gray-600" />
-                    <div>
-                      <button
-                        onClick={() =>
-                          window.open(
-                            "https://instagram.com/mingschinesecuisine",
-                            "_blank",
-                            "noopener,noreferrer",
-                          )
-                        }
-                        className="font-semibold text-blue-600 hover:underline"
-                        style={{ fontFamily: "Open Sans, sans-serif" }}
-                      >
-                        @mingschinesecuisine
-                      </button>
-                      <p
-                        className="text-sm text-gray-600"
-                        style={{ fontFamily: "Open Sans, sans-serif" }}
-                      >
-                        Follow us for updates
+                        Access menu anytime
                       </p>
                     </div>
                   </div>

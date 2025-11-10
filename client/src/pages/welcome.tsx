@@ -1,4 +1,4 @@
-import { Utensils, Instagram, Facebook, Youtube, Star } from "lucide-react";
+import { Utensils, Store } from "lucide-react";
 import { useLocation } from "wouter";
 import { useWelcomeAudio } from "../hooks/useWelcomeAudio";
 import { MediaPreloader } from "../components/media-preloader";
@@ -41,13 +41,6 @@ export default function Welcome() {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Social media click handlers
-  const handleSocialClick = useCallback((url: string) => {
-    const newWindow = window.open(url, "_blank", "noopener,noreferrer");
-    if (newWindow) {
-      (document.activeElement as HTMLElement)?.blur();
-    }
-  }, []);
 
   // Calculate responsive container height - use more screen space
   const containerHeight = Math.min(screenDimensions.height * 0.98, screenDimensions.height - 20);
@@ -81,142 +74,95 @@ export default function Welcome() {
           }}
         >
 
-          {/* Ming's Logo */}
+          {/* Restaurant POS Logo */}
           <div className="flex flex-col items-center w-full">
-            <img
-              src="/images/logo.png"
-              alt="Ming's Chinese Cuisine"
-              style={{ width: `${240 * scaleFactor}px`, height: 'auto' }}
-            />
+            <div className="flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl shadow-2xl" style={{ 
+              width: `${280 * scaleFactor}px`, 
+              height: `${140 * scaleFactor}px`,
+              padding: `${20 * scaleFactor}px`
+            }}>
+              <div className="flex flex-col items-center">
+                <Store className="text-white mb-2" style={{ width: `${48 * scaleFactor}px`, height: `${48 * scaleFactor}px` }} />
+                <h1 className="text-white font-bold text-center leading-tight" style={{ fontSize: `${28 * scaleFactor}px` }}>
+                  RESTAURANT
+                </h1>
+                <h2 className="text-white font-semibold text-center" style={{ fontSize: `${20 * scaleFactor}px` }}>
+                  POS SYSTEM
+                </h2>
+              </div>
+            </div>
           </div>
 
-          {/* Social Media Icons */}
-          <div className="flex" style={{ gap: `${16 * scaleFactor}px` }}>
-            <button
-              onClick={() => handleSocialClick("https://www.instagram.com/mingschinesecuisine.in?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==")}
-              className="border-2 border-orange-500 rounded-lg flex items-center justify-center bg-white hover:bg-orange-50 transition-colors"
-              style={{
-                width: `${48 * scaleFactor}px`,
-                height: `${48 * scaleFactor}px`,
-              }}
-            >
-              <Instagram style={{ width: `${20 * scaleFactor}px`, height: `${20 * scaleFactor}px` }} className="text-orange-500" />
-            </button>
-            <button
-              onClick={() => handleSocialClick("https://facebook.com")}
-              className="border-2 border-orange-500 rounded-lg flex items-center justify-center bg-white hover:bg-orange-50 transition-colors"
-              style={{
-                width: `${48 * scaleFactor}px`,
-                height: `${48 * scaleFactor}px`,
-              }}
-            >
-              <Facebook style={{ width: `${20 * scaleFactor}px`, height: `${20 * scaleFactor}px` }} className="text-orange-500" />
-            </button>
-            <button
-              onClick={() => handleSocialClick("https://youtube.com")}
-              className="border-2 border-orange-500 rounded-lg flex items-center justify-center bg-white hover:bg-orange-50 transition-colors"
-              style={{
-                width: `${48 * scaleFactor}px`,
-                height: `${48 * scaleFactor}px`,
-              }}
-            >
-              <Youtube style={{ width: `${20 * scaleFactor}px`, height: `${20 * scaleFactor}px` }} className="text-orange-500" />
-            </button>
+          {/* Welcome Message */}
+          <div className="text-center bg-white/90 rounded-2xl shadow-lg" style={{ 
+            padding: `${20 * scaleFactor}px ${30 * scaleFactor}px`,
+            maxWidth: `${320 * scaleFactor}px`
+          }}>
+            <h3 className="text-gray-800 font-semibold mb-2" style={{ fontSize: `${18 * scaleFactor}px` }}>
+              Welcome to Restaurant POS
+            </h3>
+            <p className="text-gray-600" style={{ fontSize: `${12 * scaleFactor}px` }}>
+              A modern point-of-sale system for restaurants
+            </p>
           </div>
 
-          {/* Explore Menu Button */}
+          {/* View Menu Button */}
           <button
             onClick={() => setLocation("/menu")}
-            className="bg-white text-orange-500 font-semibold border-2 border-orange-500 rounded-full hover:bg-orange-50 transition-colors flex items-center"
+            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-full hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 flex items-center shadow-lg"
             style={{
-              padding: `${12 * scaleFactor}px ${32 * scaleFactor}px`,
-              gap: `${8 * scaleFactor}px`,
-              fontSize: `${14 * scaleFactor}px`,
+              padding: `${14 * scaleFactor}px ${40 * scaleFactor}px`,
+              gap: `${10 * scaleFactor}px`,
+              fontSize: `${16 * scaleFactor}px`,
             }}
           >
-            <Utensils style={{ width: `${20 * scaleFactor}px`, height: `${20 * scaleFactor}px` }} />
-            <span>EXPLORE OUR MENU</span>
+            <Utensils style={{ width: `${22 * scaleFactor}px`, height: `${22 * scaleFactor}px` }} />
+            <span>VIEW MENU</span>
           </button>
 
-          {/* Rating Section */}
-          <div className="text-center">
-            <p
-              className="text-orange-500 font-medium mb-2"
-              style={{ fontSize: `${14 * scaleFactor}px`, marginBottom: `${8 * scaleFactor}px` }}
-            >
-              Click to Rate us on Google
-            </p>
-            <div
-              className="flex justify-center cursor-pointer"
-              style={{ gap: `${4 * scaleFactor}px` }}
-              onClick={() => window.open("https://g.page/r/CePLzPaLyBLNEAI/review")}
-            >
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className="text-orange-500 fill-orange-500"
-                  style={{ width: `${24 * scaleFactor}px`, height: `${24 * scaleFactor}px` }}
-                />
-              ))}
+          {/* Features Section */}
+          <div className="grid grid-cols-2 gap-4 w-full" style={{ 
+            gap: `${12 * scaleFactor}px`,
+            maxWidth: `${320 * scaleFactor}px`
+          }}>
+            <div className="bg-white/80 rounded-xl p-3 text-center" style={{ 
+              padding: `${12 * scaleFactor}px`
+            }}>
+              <p className="text-orange-500 font-semibold" style={{ fontSize: `${11 * scaleFactor}px` }}>
+                DIGITAL MENU
+              </p>
+              <p className="text-gray-600 text-xs mt-1" style={{ fontSize: `${9 * scaleFactor}px` }}>
+                Interactive & Easy
+              </p>
             </div>
-          </div>
-
-          {/* Address Section */}
-          <div className="text-center">
-            <div
-              className="border-2 border-gray-600 rounded-full inline-block"
-              style={{
-                padding: `${4 * scaleFactor}px ${16 * scaleFactor}px`,
-                marginBottom: `${12 * scaleFactor}px`,
-              }}
-            >
-              <span
-                className="text-orange-500 font-semibold"
-                style={{ fontSize: `${12 * scaleFactor}px` }}
-              >
-                ADDRESS
-              </span>
+            <div className="bg-white/80 rounded-xl p-3 text-center" style={{ 
+              padding: `${12 * scaleFactor}px`
+            }}>
+              <p className="text-orange-500 font-semibold" style={{ fontSize: `${11 * scaleFactor}px` }}>
+                QUICK SERVICE
+              </p>
+              <p className="text-gray-600 text-xs mt-1" style={{ fontSize: `${9 * scaleFactor}px` }}>
+                Fast & Efficient
+              </p>
             </div>
-            <div
-              className="text-gray-700 leading-tight"
-              style={{ fontSize: `${11 * scaleFactor}px` }}
-            >
-              <p>SHOP NO 2&3, GANGA GODAVARI</p>
-              <p>APARTMENT, KATEMANIVALI NAKA,</p>
-              <p>PRABHURAM NAGAR, KALYAN EAST,</p>
-              <p>KALYAN EAST, THANE, KALYAN,</p>
-              <p>MAHARASHTRA, 421306</p>
+            <div className="bg-white/80 rounded-xl p-3 text-center" style={{ 
+              padding: `${12 * scaleFactor}px`
+            }}>
+              <p className="text-orange-500 font-semibold" style={{ fontSize: `${11 * scaleFactor}px` }}>
+                EASY ORDERING
+              </p>
+              <p className="text-gray-600 text-xs mt-1" style={{ fontSize: `${9 * scaleFactor}px` }}>
+                Simple & Smooth
+              </p>
             </div>
-          </div>
-
-          {/* Contact Section */}
-          <div className="text-center">
-            <div
-              className="border-2 border-gray-600 rounded-full inline-block"
-              style={{
-                padding: `${4 * scaleFactor}px ${16 * scaleFactor}px`,
-                marginBottom: `${12 * scaleFactor}px`,
-              }}
-            >
-              <span
-                className="text-orange-500 font-semibold"
-                style={{ fontSize: `${12 * scaleFactor}px` }}
-              >
-                CONTACT
-              </span>
-            </div>
-            <div
-              className="text-gray-700"
-              style={{ fontSize: `${11 * scaleFactor}px`, gap: `${4 * scaleFactor}px` }}
-            >
-              <p>info@mingschinesecuisine.in</p>
-              <p>+91 75069 69333</p>
-              <p
-                className="text-orange-500 cursor-pointer no-underline"
-                onClick={() => window.open("http://www.mingschinesecuisine.in", "_blank")}
-                style={{ textDecoration: 'none' }}
-              >
-                www.mingschinesecuisine.in
+            <div className="bg-white/80 rounded-xl p-3 text-center" style={{ 
+              padding: `${12 * scaleFactor}px`
+            }}>
+              <p className="text-orange-500 font-semibold" style={{ fontSize: `${11 * scaleFactor}px` }}>
+                24/7 ACCESS
+              </p>
+              <p className="text-gray-600 text-xs mt-1" style={{ fontSize: `${9 * scaleFactor}px` }}>
+                Always Available
               </p>
             </div>
           </div>
