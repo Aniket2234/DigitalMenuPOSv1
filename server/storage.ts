@@ -332,7 +332,7 @@
 // const connectionString = "mongodb+srv://airavatatechnologiesprojects:8tJ6v8oTyQE1AwLV@mingsdb.mmjpnwc.mongodb.net/?retryWrites=true&w=majority&appName=MINGSDB";
 // export const storage = new MongoStorage(connectionString);
 import { MongoClient, Db, Collection, ObjectId } from "mongodb";
-import { type User, type InsertUser, type MenuItem, type InsertMenuItem, type CartItem, type InsertCartItem } from "@shared/schema";
+import { type User, type InsertUser, type MenuItem, type InsertMenuItem, type CartItem, type InsertCartItem, type Customer, type InsertCustomer, type Order, type InsertOrder } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -349,6 +349,17 @@ export interface IStorage {
   addToCart(item: InsertCartItem): Promise<CartItem>;
   removeFromCart(id: string): Promise<void>;
   clearCart(): Promise<void>;
+
+  getCustomerByPhone(phoneNumber: string): Promise<Customer | undefined>;
+  createCustomer(customer: InsertCustomer): Promise<Customer>;
+  updateCustomerName(phoneNumber: string, name: string): Promise<Customer | undefined>;
+  incrementVisitCount(phoneNumber: string): Promise<void>;
+
+  createOrder(order: InsertOrder): Promise<Order>;
+  getOrdersByCustomer(customerId: string): Promise<Order[]>;
+  getOrder(id: string): Promise<Order | undefined>;
+  updateOrderStatus(id: string, status: Order['status']): Promise<void>;
+  updatePaymentStatus(id: string, paymentStatus: Order['paymentStatus'], paymentMethod?: string): Promise<void>;
 }
 
 export class MongoStorage implements IStorage {
@@ -357,6 +368,8 @@ export class MongoStorage implements IStorage {
   private categoryCollections: Map<string, Collection<MenuItem>>;
   private cartItemsCollection: Collection<CartItem>;
   private usersCollection: Collection<User>;
+  private customersCollection: Collection<Customer>;
+  private ordersCollection: Collection<Order>;
   private restaurantId: ObjectId;
 
   // Define available categories - these match menu.tsx categories
@@ -420,6 +433,8 @@ export class MongoStorage implements IStorage {
 
     this.cartItemsCollection = this.db.collection("cartitems");
     this.usersCollection = this.db.collection("users");
+    this.customersCollection = this.db.collection("customers");
+    this.ordersCollection = this.db.collection("orders");
     this.restaurantId = new ObjectId("6874cff2a880250859286de6");
   }
 
@@ -456,9 +471,23 @@ export class MongoStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    // DISABLED: Write operation blocked to prevent database modifications
-    console.warn("createUser() is disabled - database is in READ-ONLY mode");
-    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
+    try {
+      const now = new Date();
+      const user: Omit<User, '_id'> = {
+        ...insertUser,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const result = await this.usersCollection.insertOne(user as User);
+      return {
+        _id: result.insertedId,
+        ...user,
+      } as User;
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
+    }
   }
 
   async getMenuItems(): Promise<MenuItem[]> {
@@ -506,9 +535,26 @@ export class MongoStorage implements IStorage {
   }
 
   async addMenuItem(item: InsertMenuItem): Promise<MenuItem> {
-    // DISABLED: Write operation blocked to prevent database modifications
-    console.warn("addMenuItem() is disabled - database is in READ-ONLY mode");
-    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
+    try {
+      const menuItemsCollection = this.db.collection("menuItems");
+      const now = new Date();
+      const menuItem: Omit<MenuItem, '_id'> = {
+        ...item,
+        restaurantId: this.restaurantId,
+        createdAt: now,
+        updatedAt: now,
+        __v: 0
+      };
+
+      const result = await menuItemsCollection.insertOne(menuItem as MenuItem);
+      return {
+        _id: result.insertedId,
+        ...menuItem,
+      } as MenuItem;
+    } catch (error) {
+      console.error("Error adding menu item:", error);
+      throw error;
+    }
   }
 
   async getCartItems(): Promise<CartItem[]> {
@@ -522,21 +568,197 @@ export class MongoStorage implements IStorage {
   }
 
   async addToCart(item: InsertCartItem): Promise<CartItem> {
-    // DISABLED: Write operation blocked to prevent database modifications
-    console.warn("addToCart() is disabled - database is in READ-ONLY mode");
-    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
+    try {
+      const menuItemObjectId = new ObjectId(item.menuItemId);
+      const existing = await this.cartItemsCollection.findOne({ menuItemId: menuItemObjectId });
+
+      if (existing) {
+        const updatedCart = await this.cartItemsCollection.findOneAndUpdate(
+          { _id: existing._id },
+          {
+            $inc: { quantity: item.quantity || 1 },
+            $set: { updatedAt: new Date() }
+          },
+          { returnDocument: 'after' }
+        );
+        return updatedCart!;
+      }
+
+      const now = new Date();
+      const cartItem: Omit<CartItem, '_id'> = {
+        menuItemId: menuItemObjectId,
+        quantity: item.quantity || 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const result = await this.cartItemsCollection.insertOne(cartItem as CartItem);
+      return {
+        _id: result.insertedId,
+        ...cartItem,
+      } as CartItem;
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      throw error;
+    }
   }
 
   async removeFromCart(id: string): Promise<void> {
-    // DISABLED: Delete operation blocked to prevent database modifications
-    console.warn("removeFromCart() is disabled - database is in READ-ONLY mode");
-    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
+    try {
+      await this.cartItemsCollection.deleteOne({ _id: new ObjectId(id) });
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+      throw error;
+    }
   }
 
   async clearCart(): Promise<void> {
-    // DISABLED: Delete operation blocked to prevent database modifications
-    console.warn("clearCart() is disabled - database is in READ-ONLY mode");
-    throw new Error("Database is in READ-ONLY mode - write operations are disabled");
+    try {
+      await this.cartItemsCollection.deleteMany({});
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      throw error;
+    }
+  }
+
+  async getCustomerByPhone(phoneNumber: string): Promise<Customer | undefined> {
+    try {
+      const customer = await this.customersCollection.findOne({ phoneNumber });
+      return customer || undefined;
+    } catch (error) {
+      console.error("Error getting customer by phone:", error);
+      return undefined;
+    }
+  }
+
+  async createCustomer(insertCustomer: InsertCustomer): Promise<Customer> {
+    try {
+      const now = new Date();
+      const customer: Omit<Customer, '_id'> = {
+        ...insertCustomer,
+        visitCount: 1,
+        firstVisit: now,
+        lastVisit: now,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const result = await this.customersCollection.insertOne(customer as Customer);
+      return {
+        _id: result.insertedId,
+        ...customer,
+      } as Customer;
+    } catch (error) {
+      console.error("Error creating customer:", error);
+      throw error;
+    }
+  }
+
+  async updateCustomerName(phoneNumber: string, name: string): Promise<Customer | undefined> {
+    try {
+      const updatedCustomer = await this.customersCollection.findOneAndUpdate(
+        { phoneNumber },
+        {
+          $set: { name, updatedAt: new Date() }
+        },
+        { returnDocument: 'after' }
+      );
+      return updatedCustomer || undefined;
+    } catch (error) {
+      console.error("Error updating customer name:", error);
+      return undefined;
+    }
+  }
+
+  async incrementVisitCount(phoneNumber: string): Promise<void> {
+    try {
+      await this.customersCollection.updateOne(
+        { phoneNumber },
+        {
+          $inc: { visitCount: 1 },
+          $set: { lastVisit: new Date(), updatedAt: new Date() }
+        }
+      );
+    } catch (error) {
+      console.error("Error incrementing visit count:", error);
+      throw error;
+    }
+  }
+
+  async createOrder(insertOrder: InsertOrder): Promise<Order> {
+    try {
+      const now = new Date();
+      const order: Omit<Order, '_id'> = {
+        ...insertOrder,
+        customerId: new ObjectId(insertOrder.customerId),
+        orderDate: now,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const result = await this.ordersCollection.insertOne(order as Order);
+      return {
+        _id: result.insertedId,
+        ...order,
+      } as Order;
+    } catch (error) {
+      console.error("Error creating order:", error);
+      throw error;
+    }
+  }
+
+  async getOrdersByCustomer(customerId: string): Promise<Order[]> {
+    try {
+      const orders = await this.ordersCollection
+        .find({ customerId: new ObjectId(customerId) })
+        .sort({ orderDate: -1 })
+        .toArray();
+      return orders;
+    } catch (error) {
+      console.error("Error getting orders by customer:", error);
+      return [];
+    }
+  }
+
+  async getOrder(id: string): Promise<Order | undefined> {
+    try {
+      const order = await this.ordersCollection.findOne({ _id: new ObjectId(id) });
+      return order || undefined;
+    } catch (error) {
+      console.error("Error getting order:", error);
+      return undefined;
+    }
+  }
+
+  async updateOrderStatus(id: string, status: Order['status']): Promise<void> {
+    try {
+      await this.ordersCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status, updatedAt: new Date() } }
+      );
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      throw error;
+    }
+  }
+
+  async updatePaymentStatus(id: string, paymentStatus: Order['paymentStatus'], paymentMethod?: string): Promise<void> {
+    try {
+      const update: any = {
+        paymentStatus,
+        updatedAt: new Date()
+      };
+      if (paymentMethod) {
+        update.paymentMethod = paymentMethod;
+      }
+      await this.ordersCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: update }
+      );
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      throw error;
+    }
   }
 
   private sortMenuItems(items: MenuItem[]): MenuItem[] {
