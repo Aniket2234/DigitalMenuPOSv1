@@ -13,6 +13,7 @@ import {
   MapPin,
   Mic,
   MicOff,
+  User,
 } from "lucide-react";
 import { FaInstagram } from "react-icons/fa";
 import { useLocation } from "wouter";
@@ -24,6 +25,8 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import DishCard from "@/components/dish-card";
 import { Cart } from "@/components/Cart";
 import { useCart } from "@/hooks/useCart";
+import { useCustomer } from "@/contexts/CustomerContext";
+import { CustomerProfileDialog } from "@/components/customer-profile-dialog";
 import type { MenuItem } from "@shared/schema";
 import {
   Dialog,
@@ -154,6 +157,7 @@ const filterTypes = [
 
 export default function Menu() {
   const [, setLocation] = useLocation();
+  const { customer } = useCustomer();
   const [activeCategory, setActiveCategory] = useState("new");
   const [filterType, setFilterType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -166,6 +170,7 @@ export default function Menu() {
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
   const [selectedItemForNotes, setSelectedItemForNotes] = useState<MenuItem | null>(null);
   const [itemPreferences, setItemPreferences] = useState<Record<string, { spiceLevel: string; notes: string }>>({});
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   
   const { addToCart, cart, updateQuantity, removeFromCart, updateNotes, updateSpiceLevel } = useCart();
 
@@ -385,6 +390,20 @@ export default function Menu() {
             </div>
 
             <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 flex-shrink-0">
+              {/* Profile Button */}
+              {customer && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowProfileDialog(true)}
+                  className="hover:bg-transparent"
+                  style={{ color: "var(--elegant-gold)" }}
+                  data-testid="button-profile"
+                >
+                  <User className="h-6 w-6 sm:h-7 sm:w-7" />
+                </Button>
+              )}
+
               {/* Cart Button */}
               <Cart />
 
@@ -1102,6 +1121,12 @@ export default function Menu() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Customer Profile Dialog */}
+      <CustomerProfileDialog 
+        open={showProfileDialog}
+        onOpenChange={setShowProfileDialog}
+      />
     </div>
   );
 }

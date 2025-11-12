@@ -3,14 +3,18 @@ import { useLocation } from "wouter";
 import { useWelcomeAudio } from "../hooks/useWelcomeAudio";
 import { MediaPreloader } from "../components/media-preloader";
 import { useState, useEffect, useCallback } from "react";
+import { useCustomer } from "@/contexts/CustomerContext";
+import { CustomerRegistrationDialog } from "@/components/customer-registration-dialog";
 import backgroundImage from "/background.png";
 
 export default function Welcome() {
   const [, setLocation] = useLocation();
+  const { customer } = useCustomer();
   const { hasPlayedAudio, audioError, isReady } = useWelcomeAudio();
   const [mediaReady, setMediaReady] = useState(false);
   const [screenDimensions, setScreenDimensions] = useState({ width: 0, height: 0 });
   const [scaleFactor, setScaleFactor] = useState(1);
+  const [showRegistrationDialog, setShowRegistrationDialog] = useState(false);
 
   // Detect screen size and calculate scale factor
   useEffect(() => {
@@ -45,8 +49,23 @@ export default function Welcome() {
   // Calculate responsive container height - use more screen space
   const containerHeight = Math.min(screenDimensions.height * 0.98, screenDimensions.height - 20);
 
+  const handleViewMenuClick = () => {
+    if (customer) {
+      setLocation("/menu");
+    } else {
+      setShowRegistrationDialog(true);
+    }
+  };
+
   return (
     <div className="h-screen w-screen overflow-hidden relative flex items-center justify-center" style={{ backgroundColor: '#FFF5F2' }}>
+      {/* Customer Registration Dialog */}
+      <CustomerRegistrationDialog 
+        open={showRegistrationDialog}
+        onOpenChange={setShowRegistrationDialog}
+        onSuccess={() => setLocation("/menu")}
+      />
+
       {/* Media preloader */}
       <MediaPreloader onComplete={() => setMediaReady(true)} />
 
@@ -108,7 +127,8 @@ export default function Welcome() {
 
           {/* View Menu Button */}
           <button
-            onClick={() => setLocation("/menu")}
+            onClick={handleViewMenuClick}
+            data-testid="button-view-menu"
             className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-full hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 flex items-center shadow-lg"
             style={{
               padding: `${14 * scaleFactor}px ${40 * scaleFactor}px`,
