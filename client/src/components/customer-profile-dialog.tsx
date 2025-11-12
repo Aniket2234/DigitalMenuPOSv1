@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { useQuery } from "@tanstack/react-query";
 import type { Order } from "@shared/schema";
-import { User, Phone, Calendar, ShoppingBag, Loader2 } from "lucide-react";
+import { User, Phone, ShoppingBag, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
@@ -65,13 +65,6 @@ export function CustomerProfileDialog({ open, onOpenChange }: CustomerProfileDia
               <Phone className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Phone:</span>
               <span data-testid="text-customer-phone">{customer.phoneNumber}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Visits:</span>
-              <Badge variant="secondary" data-testid="badge-visit-count">
-                {customer.visitCount} {customer.visitCount === 1 ? 'visit' : 'visits'}
-              </Badge>
             </div>
           </div>
 
