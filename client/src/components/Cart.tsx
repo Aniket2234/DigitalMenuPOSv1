@@ -388,8 +388,8 @@ export function Cart() {
                           variant="outline"
                           size="icon"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1 || item.isOrdered}
-                          className={item.isOrdered ? "opacity-40 cursor-not-allowed" : ""}
+                          disabled={item.quantity <= 1 || (item.isOrdered && item.quantity <= (item.orderedQuantity || 0))}
+                          className={(item.isOrdered && item.quantity <= (item.orderedQuantity || 0)) ? "opacity-40 cursor-not-allowed" : ""}
                           data-testid={`button-decrease-${item.menuItemId}`}
                         >
                           <Minus className="h-4 w-4" />
